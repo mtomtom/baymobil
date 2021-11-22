@@ -1,5 +1,5 @@
- *.pyc
+*.pyc
 output/
 Format_files.ipynb
-.ipynb_checkpoints
+.ipynb_checkpoints/
 .DS_Store/
