@@ -2,10 +2,7 @@
 ## Bayes factor functions
 import numpy as np
 import scipy.special as ss
-from functools import reduce
-import glob
 import pandas as pd
-import tqdm
 
 ## Use the Stirling approximation for large binomials
 def stirling_binom(N,n2):
@@ -56,7 +53,6 @@ def calculate_evidence(df, other_ecotype):
     return df
 
 ## Data processing functions
-
 def clean_up_file(data):
     df = pd.read_csv(data, low_memory = False)
     cols = df.columns.drop(['SNP'])
@@ -81,22 +77,9 @@ def get_homograft_data(hom_file_eco1, hom_file_eco2):
     
 def run_bayes_analysis(het_file, df_hom_eco1, df_hom_eco2):
     ## So, now we have a1, b1 for each homograft, we can perform the BF analysis
-    ## The tissue denotes from where the samples were taken
     het_file = clean_up_file(het_file)
     het_file_merged = pd.merge(het_file, df_hom_eco1[["SNP","a1","b1"]], on = "SNP")
     het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","a1","b1"]], on = "SNP")
     df = calculate_evidence(het_file_merged, "eco2")
     return df
 
-def run_bayes_analysis_sp(het_file, alpha, beta):
-    ## So, now we have a1, b1 for each homograft, we can perform the BF analysis
-    print("Running Bayesian analysis...")
-    het = clean_up_file(file)
-    ## Add in the a1, b1, a2, b2
-    ## Need to use the supplied set priors
-    het["a1_x"] = alpha
-    het["b1_x"] = beta
-    het["a1_y"] = alpha
-    het["b1_y"] = beta
-    df = calculate_evidence(het, "eco2")
-    return df

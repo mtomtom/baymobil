@@ -1,5 +1,4 @@
 import bf
-import pandas as pd
 import argparse
 import os
 
@@ -22,7 +21,6 @@ print(f"Running Bayesian analysis for: het file = {het_file}, hom file eco1 = {h
 df_hom_eco1, df_hom_eco2 = bf.get_homograft_data(hom_file_eco1, hom_file_eco2)
 df_het = bf.run_bayes_analysis(het_file, df_hom_eco1, df_hom_eco2)
 ## Write output to file for further analysis
-## Create an output folder - separate for sp
        
 if not os.path.exists('output'):
     os.makedirs('output')
