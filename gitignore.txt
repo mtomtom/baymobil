@@ -1,2 +1,4 @@
 *.pyc
+output/
+Format_files.ipynb
 
