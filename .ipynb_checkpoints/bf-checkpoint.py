@@ -21,7 +21,7 @@ def evidenceH0(N,n2,a,b):
 def evidenceHmob (N,n2,ne2,a1,b1,a2,b2):
     return np.log(ss.binom(N-ne2,n2-ne2))+ss.betaln(n2-ne2+a1,N-n2+b1)+ ss.betaln(ne2+a2,b2)-(ss.betaln(a1,b1)+ss.betaln(a2,b2))
 
-## Function to apply evidenceHmob to the data 
+## Function to apply evidenceHmob to the data
 def calculateevidenceHmob(N,n2,a1,b1,a2,b2):
     if n2 > 0:
         n2_values = np.arange(1,n2+1) ## Careful here! This needs to include n2, hence the +1
@@ -30,10 +30,14 @@ def calculateevidenceHmob(N,n2,a1,b1,a2,b2):
         ev_inf = np.isinf(ev)
         s_binom = stirling_binom(N-n2_values[ev_inf],n2-n2_values[ev_inf])
         ev[ev_inf] = s_binom+ss.betaln(n2-n2_values[ev_inf]+a1,N-n2+b1)+ ss.betaln(n2_values[ev_inf]+a2,b2)-(ss.betaln(a1,b1)+ss.betaln(a2,b2))
+        ## Get the maximum evidence
         best_ev = ev.max()
-        return best_ev
+        ## Get the number of reads for which we see this evidence
+        index_max = np.argmax(ev)
+        best_n2 = n2_values[index_max]
+        return [best_ev, best_n2]
     else:
-        return ss.betaln(a1,N-1+b1)+ss.betaln(a2,1+b2)-(ss.betaln(a1,b1)+ss.betaln(a2,b2))
+        return [ss.betaln(a1,N-1+b1)+ss.betaln(a2,1+b2)-(ss.betaln(a1,b1)+ss.betaln(a2,b2)),0]
 
 ## Apply all the functions and calculate the BF
 def calculate_evidence(df, other_ecotype):
@@ -46,7 +50,7 @@ def calculate_evidence(df, other_ecotype):
     ## Calculate the evidence for the null hypothesis
     df['evidenceH0'] = [evidenceH0(x, y, alpha, beta) for x, y, alpha, beta in zip(depth, reads, a1, b1)] 
     ## Calculate the evidence for mobility
-    df['evidenceHmob'] = [calculateevidenceHmob(x, y, alpha1, beta1, alpha2, beta2) for x, y, alpha1, beta1, alpha2, beta2 in zip(depth, reads, a1, b1, a2, b2)]
+    df[['evidenceHmob','n2']]= [calculateevidenceHmob(x, y, alpha1, beta1, alpha2, beta2) for x, y, alpha1, beta1, alpha2, beta2 in zip(depth, reads, a1, b1, a2, b2)]
     ## Calculate Bayes Factor
     ## Functions output natural logs - convert to log10
     df["Bayes factor"] = (df["evidenceHmob"] - df["evidenceH0"]) / np.log(10)

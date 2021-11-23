@@ -30,8 +30,8 @@ path = 'output/'
 filename = het_file.split("/")[-1]
 filename = filename.split(".")[0:-1]
 filename = ' '.join(filename)
-print(filename)
-df_het[["SNP","Bayes factor"]].to_csv(path + filename + "_results.csv", index = None)
+#df_het[["SNP","Bayes factor","n2"]].to_csv(path + filename + "_results.csv", index = None)
+df_het.to_csv(path + filename + "_results.csv", index = None)
 
 
 
