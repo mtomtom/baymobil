@@ -1,6 +1,6 @@
 # bayes-snp-diff
 
-To run: `python run_bf.py <het_file> <hom_file_eco1> <hom_file_eco1>`
+To run: `python run_bf.py <het_file> <hom_file_eco1> <hom_file_eco2>`
 
 Files need to be in csv format and include columns with the headers: SNP N eco1 eco2, where SNP is the SNP identifier, N is the total number of reads, eco1 are the reads that map to the local ecotype, eco2 are the reads that map to the distal ecotype. Any additional columns (for example, transcript ID) won't affect the code.
 
