@@ -50,7 +50,10 @@ def calculate_evidence(df, other_ecotype):
     ## Calculate the evidence for the null hypothesis
     df['evidenceH0'] = [evidenceH0(x, y, alpha, beta) for x, y, alpha, beta in zip(depth, reads, a1, b1)] 
     ## Calculate the evidence for mobility
-    df[['evidenceHmob','n2']]= [calculateevidenceHmob(x, y, alpha1, beta1, alpha2, beta2) for x, y, alpha1, beta1, alpha2, beta2 in zip(depth, reads, a1, b1, a2, b2)]
+    #df[['evidenceHmob','n2']]= [calculateevidenceHmob(x, y, alpha1, beta1, alpha2, beta2) for x, y, alpha1, beta1, alpha2, beta2 in zip(depth, reads, a1, b1, a2, b2)]
+## The above code breaks for non-mac platforms, therefore we shall create a new dataframe and append it to our original
+    df_results = pd.DataFrame([calculateevidenceHmob(x, y, alpha1, beta1, alpha2, beta2) for x, y, alpha1, beta1, alpha2, beta2 in zip(depth, reads, a1, b1, a2, b2)], columns=("evidenceHmob","n2"))
+    df = pd.concat([df,df_results],sort=False, axis=1)
     ## Calculate Bayes Factor
     ## Functions output natural logs - convert to log10
     df["Bayes factor"] = (df["evidenceHmob"] - df["evidenceH0"]) / np.log(10)
@@ -66,7 +69,7 @@ def clean_up_file(data):
     return df
 
 def get_homograft_data(hom_file_eco1, hom_file_eco2):
-## Get alpha and beta - this creates a dict with a list of dfs for each homograft type (col-col, ler-ler)
+    ## Get alpha and beta 
     ## StemLeaves heterograft data uses Stem homografts
     ## Add in the alpha and beta values
     print("Processing homograft files...")
