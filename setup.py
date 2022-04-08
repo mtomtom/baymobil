@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.5' 
+VERSION = '0.0.11' 
 DESCRIPTION = 'Bayesian analysis of heterograft data'
 LONG_DESCRIPTION = 'A function to evaluate heterograft data based on error rate distributions taken from homograft data'
 

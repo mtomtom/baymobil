@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: bf-calculator
+Version: 0.0.11
+Summary: Bayesian analysis of heterograft data
+Author: Melissa Tomkins
+Author-email: melissa.tomkins@jic.ac.uk
+License: UNKNOWN
+Keywords: python,first package
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+
+A function to evaluate heterograft data based on error rate distributions taken from homograft data
+
