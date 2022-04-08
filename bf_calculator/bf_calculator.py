@@ -2,6 +2,9 @@ import numpy as np
 import scipy.special as ss
 import pandas as pd
 from decimal import Decimal
+import os
+import warnings
+from tqdm import tqdm
 
 ## The stirling approximation is used for large read depths, which would return a binomial
 ## value of inf
@@ -37,19 +40,23 @@ def check_data(data_file):
 
 ## Apply all the functions and calculate the BF
 def calculate_evidence(df):
+    tqdm.pandas()
     ## Functions output natural logs - convert to log10
-    df["pos"] = df.apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
+    print("Calculating Bayes Factors...")
+    df["pos"] = df.progress_apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
     df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
     df.drop(columns=["pos"], inplace=True)
     return df
 
 def calculate_evidence_stirling(df):
+    tqdm.pandas()
     ## Functions output natural logs - convert to log10
-    df["pos"] = df.apply(lambda x:fasterpostN2_stirling(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
+    print("Calculating Bayes Factors using Stirling approximation...")
+    df.drop(columns=["meanN2","N2max","log10BF"],inplace=True)
+    df["pos"] = df.progress_apply(lambda x:fasterpostN2_stirling(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
     df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
     df.drop(columns=["pos"], inplace=True)
     return df
-
 
 ### This function will take in 3 float values and display the output to the screen
 def run_bayes_analysis(hom_eco1N:float, hom_eco1n:float, hom_eco2N:float, hom_eco2n:float, hetN: float, hetn: float, nmax):
@@ -57,16 +64,16 @@ def run_bayes_analysis(hom_eco1N:float, hom_eco1n:float, hom_eco2N:float, hom_ec
     result = fasterpostN2(hom_eco1N, hom_eco1n, hom_eco2N, hom_eco2n, hetN, hetn, nmax)
     print(f"meanN2: {result[0]}, N2max: {result[1]}, log10 BF: {result[2]}")
 
-def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax)->pd.DataFrame:
+def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
     ## Check that all of the files are in the correct format
-    het_file = check_data(het_file)
+    df_het_file = check_data(het_file)
     df_hom_eco1 = check_data(df_hom_eco1)
     df_hom_eco2 = check_data(df_hom_eco2)
     ## Rename the columns in the homograft files
     df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
     df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
     ## Create a single dataframe with all of the values
-    het_file_merged = pd.merge(het_file, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
+    het_file_merged = pd.merge(df_het_file, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
     het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
     ## Add in our nmax values
     if nmax == "max":
@@ -77,21 +84,23 @@ def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nma
             pd.to_numeric(het_file_merged["nmax"], errors='coerce')
         except:
             raise ValueError('Unable to convert nmax value to numeric.')
-    df = calculate_evidence(het_file_merged)
-    ## Handle any inf values resulting from large binomials
+    ## If the binomial returns an inf value, this code will raise a warning. We ignore it here, because we will replace these values later
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = calculate_evidence(het_file_merged)
+    ## Check for inf values
     df_inf = df[df["log10BF"]==np.inf]
-    if len(df_inf) > 0:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         df_inf_results = calculate_evidence_stirling(df_inf)
-        ## Remove the inf values from our original dataframe
-        df_final = df[df["log10BF"]!=np.inf]
+    df_no_inf = df[df["log10BF"]!=np.inf]
+    df_new = pd.concat([df_no_inf, df_inf_results],axis=1)
+    df = df_new
+    outfile = het_file.split(".")[0] + "_results.csv"
+    df.to_csv(outfile, index = None)
+    
+## The main function that handles the Bayesian anaylsis. This takes the parameters: Nhomo1, ## nhomo2, the reads that map to eco1 and eco2 in homograft 1, Nhomo2, nhomo2, the reads ## that map to eco2 and eco1 in homograft 2, N, n, the reads that map to eco1 and eco2 in the heterograft dataset and nmax, the reads from N over which we want to integrate.
 
-        ## Add in the new inf values
-        df_final_new = pd.concat([df_final, df_inf_results])
-        df = df_final_new
-    return df
-"""
-The main function that handles the Bayesian anaylsis. This takes the parameters: Nhomo1, nhomo2, the reads that map to eco1 and eco2 in homograft 1, Nhomo2, nhomo2, the reads that map to eco2 and eco1 in homograft 2, N, n, the reads that map to eco1 and eco2 in the heterograft dataset and nmax, the reads from N over which we want to integrate.
-"""
 def fasterpostN2 (Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     N = int(N)
     alpha1 = nhomo1+1
@@ -109,7 +118,7 @@ def fasterpostN2 (Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
         n2_max = min(N-n, N2)
         for n2 in np.arange(n2_min, n2_max+1):
             postN2[i] = postN2[i] + ss.binom(N-N2,n-N2+n2)*ss.binom(N2,n2)* ss.beta(n-N2+n2+alpha1,N-n-n2+beta1)*ss.beta(n2+alpha2,N2-n2+beta2)
-        postN2[i]=postN2[i]/i
+            postN2[i]=postN2[i]/i
         if (N2>0) & (postN2[i]>PN2max):
             PN2max = postN2[i]
             N2max = N2
@@ -119,12 +128,12 @@ def fasterpostN2 (Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     sumpostN2=sum(postN2)
     postN2=postN2/sumpostN2
     postN2xN2=postN2xN2/sumpostN2
-    #logBF21 = np.log10((1-postN2[1])/postN2[1])-np.log10(N)
     logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
     meanN2=sum(postN2xN2)
     results = [meanN2,N2max,logBF21N2]
     return results
 
+### The main function using the Stirling approximation for those values with large read depths
 def fasterpostN2_stirling(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     N = int(N)
     alpha1 = nhomo1+1
@@ -153,7 +162,6 @@ def fasterpostN2_stirling(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     sumpostN2=sum(postN2)
     postN2=postN2/sumpostN2
     postN2xN2=postN2xN2/sumpostN2
-    #logBF21 = np.log10((1-postN2[1])/postN2[1])-np.log10(N)
     logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
     meanN2=sum(postN2xN2)
     results = [meanN2,N2max,logBF21N2]
