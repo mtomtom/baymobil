@@ -90,12 +90,13 @@ def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nma
         df = calculate_evidence(het_file_merged)
     ## Check for inf values
     df_inf = df[df["log10BF"]==np.inf]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df_inf_results = calculate_evidence_stirling(df_inf)
-    df_no_inf = df[df["log10BF"]!=np.inf]
-    df_new = pd.concat([df_no_inf, df_inf_results],axis=1)
-    df = df_new
+    if len(df_inf)>0:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_inf_results = calculate_evidence_stirling(df_inf)
+        df_no_inf = df[df["log10BF"]!=np.inf]
+        df_new = pd.concat([df_no_inf, df_inf_results],axis=1)
+        df = df_new
     outfile = het_file.split(".")[0] + "_results.csv"
     df.to_csv(outfile, index = None)
     
