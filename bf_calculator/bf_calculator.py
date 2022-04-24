@@ -119,7 +119,7 @@ def fasterpostN2 (Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
         n2_max = min(N-n, N2)
         for n2 in np.arange(n2_min, n2_max+1):
             postN2[i] = postN2[i] + ss.binom(N-N2,n-N2+n2)*ss.binom(N2,n2)* ss.beta(n-N2+n2+alpha1,N-n-n2+beta1)*ss.beta(n2+alpha2,N2-n2+beta2)
-            postN2[i]=postN2[i]/i
+        postN2[i]=postN2[i]/i
         if (N2>0) & (postN2[i]>PN2max):
             PN2max = postN2[i]
             N2max = N2
