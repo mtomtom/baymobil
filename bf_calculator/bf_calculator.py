@@ -19,9 +19,9 @@ def check_data(data_file):
     ### Check column headings
     cols = df.columns.to_list()
     check_cols = ['SNP','N','eco1','eco2']
-    if not all((w in check_cols for w in cols)):
-        print("File must be in format: SNP N eco1 eco2")
-        return False
+    if not set(check_cols).issubset(cols):
+        print("File must include columns: SNP N eco1 eco2")
+        raise ValueError('Files not formatted correctly.')
     ### Check values can be converted to numeric (if not already)
     cols = df.columns.drop(['SNP'])
     try:
