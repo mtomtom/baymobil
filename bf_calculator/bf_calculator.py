@@ -62,7 +62,8 @@ def calculate_evidence_stirling(df):
 def run_bayes_analysis(hom_eco1N:float, hom_eco1n:float, hom_eco2N:float, hom_eco2n:float, hetN: float, hetn: float, nmax):
     if nmax == "max": nmax = hetN
     result = fasterpostN2(hom_eco1N, hom_eco1n, hom_eco2N, hom_eco2n, hetN, hetn, nmax)
-    print(f"meanN2: {result[0]}, N2max: {result[1]}, log10 BF: {result[2]}")
+    ## Result is meanN2, N2max, log10BF
+    return result
 
 def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
     ## Check that all of the files are in the correct format
