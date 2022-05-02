@@ -5,7 +5,9 @@ from decimal import Decimal
 import os
 import warnings
 from tqdm import tqdm
+import pytest
 
+## Define the main functions
 ## The stirling approximation is used for large read depths, which would return a binomial
 ## value of inf
 def stirling_binom(N,n2):
@@ -13,97 +15,23 @@ def stirling_binom(N,n2):
   elif N == n2: return np.log(1)
   else: return N*np.log(N) - n2*np.log(n2) - (N-n2) * np.log(N-n2) + 0.5 *(np.log(N) - np.log(n2) - np.log(N-n2) -np.log(2 * np.pi))
 
-## Function to check that the files are in the appropriate format
-def check_data(data_file):
-    df = pd.read_csv(data_file, low_memory=False, index_col = None)
-    ### Check column headings
-    cols = df.columns.to_list()
-    check_cols = ['SNP','N','eco1','eco2']
-    if not set(check_cols).issubset(cols):
-        print("File must include columns: SNP N eco1 eco2")
-        raise ValueError('Files not formatted correctly.')
-    ### Check values can be converted to numeric (if not already)
-    cols = df.columns.drop(['SNP'])
-    try:
-        df[cols] = df[cols].apply(pd.to_numeric, errors='coerce')
-        len_df = len(df) 
-        df.dropna(inplace=True)
-        if len(df) < len_df:
-            print(f"Warning: {len_df - len(df)} Non numeric values were removed.")
-        len_df = len(df)
-        df = df[df["N"]>0]
-        if len(df) < len_df:
-            print(f"Warning: {len_df - len(df)} Zero values were removed.")
-    except:
-        raise ValueError('Unable to convert values to numeric.')
-    return df
+## Function to test our stirling binom function
+## If one of the values is 0, then this function should return np.log(1)
+def test_stirling_binom1():
+    assert stirling_binom(0,0) == np.log(1)
 
-## Apply all the functions and calculate the BF
-def calculate_evidence(df):
-    tqdm.pandas()
-    ## Functions output natural logs - convert to log10
-    print("Calculating Bayes Factors...")
-    df["pos"] = df.progress_apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
-    df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
-    df.drop(columns=["pos"], inplace=True)
-    return df
+def test_stirling_binom2():
+    assert stirling_binom(100,0) == np.log(1)
 
-def calculate_evidence_stirling(df):
-    tqdm.pandas()
-    ## Functions output natural logs - convert to log10
-    print("Calculating Bayes Factors using Stirling approximation...")
-    df.drop(columns=["meanN2","N2max","log10BF"],inplace=True)
-    df["pos"] = df.progress_apply(lambda x:fasterpostN2_stirling(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
-    df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
-    df.drop(columns=["pos"], inplace=True)
-    return df
+def test_stirling_binom3():
+    assert stirling_binom(0,100) == np.log(1)
 
-### This function will take in 3 float values and display the output to the screen
-def run_bayes_analysis(hom_eco1N:float, hom_eco1n:float, hom_eco2N:float, hom_eco2n:float, hetN: float, hetn: float, nmax):
-    if nmax == "max": nmax = hetN
-    result = fasterpostN2(hom_eco1N, hom_eco1n, hom_eco2N, hom_eco2n, hetN, hetn, nmax)
-    ## Result is meanN2, N2max, log10BF
-    return result
+## If N = n, then the function returns np.log(1)
+def test_stirling_binom3_equal_values():
+    assert stirling_binom(100,100) == np.log(1)
 
-def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
-    ## Check that all of the files are in the correct format
-    df_het_file = check_data(het_file)
-    df_hom_eco1 = check_data(df_hom_eco1)
-    df_hom_eco2 = check_data(df_hom_eco2)
-    ## Rename the columns in the homograft files
-    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
-    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
-    ## Create a single dataframe with all of the values
-    het_file_merged = pd.merge(df_het_file, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
-    het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
-    ## Add in our nmax values
-    if nmax == "max":
-        het_file_merged["nmax"] = het_file_merged["N"]
-    else:
-        try:
-            het_file_merged["nmax"] = nmax
-            pd.to_numeric(het_file_merged["nmax"], errors='coerce')
-        except:
-            raise ValueError('Unable to convert nmax value to numeric.')
-    ## If the binomial returns an inf value, this code will raise a warning. We ignore it here, because we will replace these values later
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df = calculate_evidence(het_file_merged)
-    ## Check for inf values
-    df_inf = df[df["log10BF"]==np.inf]
-    if len(df_inf)>0:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            df_inf_results = calculate_evidence_stirling(df_inf)
-        df_no_inf = df[df["log10BF"]!=np.inf]
-        df_new = pd.concat([df_no_inf, df_inf_results],axis=1)
-        df = df_new
-    outfile = het_file.split(".")[0] + "_results.csv"
-    df.to_csv(outfile, index = None)
-    
-## The main function that handles the Bayesian anaylsis. This takes the parameters: Nhomo1, ## nhomo2, the reads that map to eco1 and eco2 in homograft 1, Nhomo2, nhomo2, the reads ## that map to eco2 and eco1 in homograft 2, N, n, the reads that map to eco1 and eco2 in the heterograft dataset and nmax, the reads from N over which we want to integrate.
-
-def fasterpostN2 (Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
+## Function to calculate the posterior ratio
+def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     N = int(N)
     alpha1 = nhomo1+1
     beta1 = Nhomo1-nhomo1+1
@@ -168,3 +96,169 @@ def fasterpostN2_stirling(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     meanN2=sum(postN2xN2)
     results = [meanN2,N2max,logBF21N2]
     return results
+
+## Check that the two methods give similar results
+def test_fasterpostN2_stirling_approx():
+    test_output = fasterpostN2_stirling(100,10,100,10,100,10,10)
+    assert test_output[2] == pytest.approx(-0.2988, 0.01)
+
+def test_fasterpostN2_approx():
+    test_output = fasterpostN2(100,10,100,10,100,10,10)
+    assert test_output[2] == pytest.approx(-0.2988, 0.01)
+
+## Data can be passed in three formats: single value, dataframe, file
+
+## Define a single function with three variables (flags?)
+## Add optional argument flag: default value is single
+## How do we pass the data?
+## Either passing 3 dfs or, 3 files, or 6 numbers
+## Set nmax default value to 10
+## Default case = single values, nmax=10
+def run_bayes_analysis(data_list, nmax=10):
+    ## Detect data types in list and choose the correct process
+    if isinstance(data_list, list): 
+        ## If 6 single values are passed, then return a single BF 
+        if (len(data_list) == 6) & (all([isinstance(item, int) for item in data_list])):
+            Nhomo1,nhomo1,Nhomo2,nhomo2,N,n = data_list
+            [meanN2,N2max,log10BF] = fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax)
+            ## Check if we need to use the Stirling approximation
+            if log10BF != log10BF:
+                [meanN2,N2max,log10BF] = fasterpostN2_stirling(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax)
+            return [meanN2,N2max,log10BF]
+        ## If 3 dataframes are passed, then process and return a single dataframe
+        if (len(data_list) == 3) & (all([isinstance(item, pd.DataFrame) for item in data_list])):  
+            ## Run analysis
+            [df_hom_eco1, df_hom_eco2, df_het] = data_list
+            results_df = run_bayes_analysis_df(df_hom_eco1, df_hom_eco2, df_het, nmax)
+            return results_df
+        ## If 3 strings are passed, then load in the files and process the data
+        if (len(data_list) == 3) & (all([isinstance(item, str) for item in data_list])):
+            ## Run analysis
+            [df_hom_eco1, df_hom_eco2, het_file] = data_list
+            run_bayes_analysis_files(df_hom_eco1, df_hom_eco2, het_file, nmax)
+    else:
+        print("Data need to be in list format")
+        return False
+
+
+## Function to check that the files are in the appropriate format
+def check_data(data_file):
+    df = pd.read_csv(data_file, low_memory=False, index_col = None)
+    ### Check column headings
+    cols = df.columns.to_list()
+    check_cols = ['SNP','N','eco1','eco2']
+    if not set(check_cols).issubset(cols):
+        print("File must include columns: SNP N eco1 eco2")
+        raise ValueError('Files not formatted correctly.')
+    ### Check values can be converted to numeric (if not already)
+    cols = df.columns.drop(['SNP'])
+    try:
+        df[cols] = df[cols].apply(pd.to_numeric, errors='coerce')
+        len_df = len(df) 
+        df.dropna(inplace=True)
+        if len(df) < len_df:
+            print(f"Warning: {len_df - len(df)} Non numeric values were removed.")
+        len_df = len(df)
+        df = df[df["N"]>0]
+        if len(df) < len_df:
+            print(f"Warning: {len_df - len(df)} Zero values were removed.")
+    except:
+        raise ValueError('Unable to convert values to numeric.')
+    return df
+
+## Apply all the functions and calculate the BF
+def calculate_evidence(df):
+    tqdm.pandas()
+    ## Functions output natural logs - convert to log10
+    print("Calculating Bayes Factors...")
+    df["pos"] = df.progress_apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
+    df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
+    df.drop(columns=["pos"], inplace=True)
+    return df
+
+def calculate_evidence_stirling(df):
+    tqdm.pandas()
+    ## Functions output natural logs - convert to log10
+    print("Calculating Bayes Factors using Stirling approximation...")
+    df.drop(columns=["meanN2","N2max","log10BF"],inplace=True)
+    df["pos"] = df.progress_apply(lambda x:fasterpostN2_stirling(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
+    df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
+    df.drop(columns=["pos"], inplace=True)
+    return df
+
+### This function will take in 3 float values and return the output, using the Stirling function
+def run_bayes_analysis_stirling(hom_eco1N:float, hom_eco1n:float, hom_eco2N:float, hom_eco2n:float, hetN: float, hetn: float, nmax):
+    if nmax == "max": nmax = hetN
+    result = fasterpostN2_stirling(hom_eco1N, hom_eco1n, hom_eco2N, hom_eco2n, hetN, hetn, nmax)
+    ## Result is meanN2, N2max, log10BF
+    return result
+
+def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
+    ## Check that all of the files are in the correct format
+    df_het_file = check_data(het_file)
+    df_hom_eco1 = check_data(df_hom_eco1)
+    df_hom_eco2 = check_data(df_hom_eco2)
+    ## Rename the columns in the homograft files
+    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
+    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
+    ## Create a single dataframe with all of the values
+    het_file_merged = pd.merge(df_het_file, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
+    het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
+    ## Add in our nmax values
+    if nmax == "max":
+        het_file_merged["nmax"] = het_file_merged["N"]
+    else:
+        try:
+            het_file_merged["nmax"] = nmax
+            pd.to_numeric(het_file_merged["nmax"], errors='coerce')
+        except:
+            raise ValueError('Unable to convert nmax value to numeric.')
+    ## If the binomial returns an inf value, this code will raise a warning. We ignore it here, because we will replace these values later
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = calculate_evidence(het_file_merged)
+    ## Check for inf values
+    df_inf = df[df["log10BF"]==np.inf]
+    if len(df_inf)>0:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_inf_results = calculate_evidence_stirling(df_inf)
+        df_no_inf = df[df["log10BF"]!=np.inf]
+        df_new = pd.concat([df_no_inf.reset_index(drop=True), df_inf_results.reset_index(drop=True)])
+        df = df_new.reset_index(drop=True)
+    outfile = het_file.split(".")[0] + "_results.csv"
+    df.to_csv(outfile, index = None)
+
+def run_bayes_analysis_df(df_hom_eco1:pd.DataFrame, df_hom_eco2:pd.DataFrame, df_het:pd.DataFrame, nmax):
+    ## Rename the columns in the homograft files
+    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
+    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
+    ## Create a single dataframe with all of the values
+    het_file_merged = pd.merge(df_het, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
+    het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
+    ## Add in our nmax values
+    if nmax == "max":
+        het_file_merged["nmax"] = het_file_merged["N"]
+    else:
+        try:
+            het_file_merged["nmax"] = nmax
+            pd.to_numeric(het_file_merged["nmax"], errors='coerce')
+        except:
+            raise ValueError('Unable to convert nmax value to numeric.')
+    ## If the binomial returns an inf value, this code will raise a warning. We ignore it here, because we will replace these values later
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = calculate_evidence(het_file_merged)
+    ## Check for inf values
+    df_inf = df[df["log10BF"]==np.inf]
+    if len(df_inf)>0:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_inf_results = calculate_evidence_stirling(df_inf)
+        df_no_inf = df[df["log10BF"]!=np.inf]
+        df_new = pd.concat([df_no_inf.reset_index(drop=True), df_inf_results.reset_index(drop=True)])
+        df = df_new.reset_index(drop=True)
+    return df
+    
+
+
