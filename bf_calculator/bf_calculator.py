@@ -5,7 +5,6 @@ from decimal import Decimal
 import os
 import warnings
 from tqdm import tqdm
-import pytest
 
 ## Define the main functions
 ## The stirling approximation is used for large read depths, which would return a binomial
@@ -14,21 +13,6 @@ def stirling_binom(N,n2):
   if (N == 0) | (n2 == 0): return np.log(1)
   elif N == n2: return np.log(1)
   else: return N*np.log(N) - n2*np.log(n2) - (N-n2) * np.log(N-n2) + 0.5 *(np.log(N) - np.log(n2) - np.log(N-n2) -np.log(2 * np.pi))
-
-## Function to test our stirling binom function
-## If one of the values is 0, then this function should return np.log(1)
-def test_stirling_binom1():
-    assert stirling_binom(0,0) == np.log(1)
-
-def test_stirling_binom2():
-    assert stirling_binom(100,0) == np.log(1)
-
-def test_stirling_binom3():
-    assert stirling_binom(0,100) == np.log(1)
-
-## If N = n, then the function returns np.log(1)
-def test_stirling_binom3_equal_values():
-    assert stirling_binom(100,100) == np.log(1)
 
 ## Function to calculate the posterior ratio
 def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
@@ -97,22 +81,9 @@ def fasterpostN2_stirling(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     results = [meanN2,N2max,logBF21N2]
     return results
 
-## Check that the two methods give similar results
-def test_fasterpostN2_stirling_approx():
-    test_output = fasterpostN2_stirling(100,10,100,10,100,10,10)
-    assert test_output[2] == pytest.approx(-0.2988, 0.01)
 
-def test_fasterpostN2_approx():
-    test_output = fasterpostN2(100,10,100,10,100,10,10)
-    assert test_output[2] == pytest.approx(-0.2988, 0.01)
 
 ## Data can be passed in three formats: single value, dataframe, file
-
-## Define a single function with three variables (flags?)
-## Add optional argument flag: default value is single
-## How do we pass the data?
-## Either passing 3 dfs or, 3 files, or 6 numbers
-## Set nmax default value to 10
 ## Default case = single values, nmax=10
 def run_bayes_analysis(data_list, nmax=10):
     ## Detect data types in list and choose the correct process
