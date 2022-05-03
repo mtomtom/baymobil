@@ -12,7 +12,7 @@ Case 1: Passing list of single values:
 
 `bf.run_bayes_analysis(<values_list>, <nmax>)`
 
-where values_list contains Nhom1, nhom1, Nhom2, nhom2, Nhet, nhet, which are all ints. If nmax is omitted, then the default value of 10 will be used. If it is set to "max", then the Nhet will be used: e.g. `bf.run_bayes_analysis(<valuese_list> "max")`
+where values_list contains Nhom1, nhom1, Nhom2, nhom2, Nhet, nhet, which are all ints. If nmax is omitted, then the default value of 10 will be used. If it is set to "max", then the Nhet will be used: e.g. `bf.run_bayes_analysis(<values_list> "max")`
 
 Case 2: Passing list of dfs
 
