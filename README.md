@@ -4,7 +4,7 @@ To install: pip install -i https://test.pypi.org/simple/ bf-calculator
 
 To run: 
 
-'import bf_calculator as bf'
+`import bf_calculator as bf`
 
 The main function takes in a list of either single values, dataframes, or filenames, and depending on which objects are passed, handles the output differently.
 
