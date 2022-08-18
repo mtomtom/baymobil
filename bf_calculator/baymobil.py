@@ -5,6 +5,8 @@ import warnings
 from tqdm import tqdm
 import multiprocessing as mp
 import sys
+import simulations as sim
+import plot_data as plotdata
 
 ## Define the main functions
 def safebeta(N,n, alpha,beta):
