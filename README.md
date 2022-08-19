@@ -4,13 +4,13 @@ To install: pip install -i https://test.pypi.org/simple/ baymobile
 
 To run: 
 
-`import bf_calculator as bf`
+`import baymobil as baymob`
 
 The main function takes in a list of either single values, dataframes, or filenames, and depending on which objects are passed, handles the output differently.
 
 Case 1: Passing list of single values:
 
-`bf.run_bayes_analysis(<values_list>, <nmax>)`
+`baymob.run_bayes_analysis(<values_list>, <nmax>)`
 
 where values_list contains Nhom1, nhom1, Nhom2, nhom2, Nhet, nhet, which are all ints. If nmax is omitted, then the default value of 10 will be used. If it is set to "max", then the Nhet will be used: e.g. `bf.run_bayes_analysis(<values_list> "max")`
 
@@ -21,4 +21,8 @@ If the function is passed a list of dataframes (hom1, hom2, het), then it will r
 Case 3: Passing list of filenames (hom1, hom2, het)
   
 Files need to be in csv format and include columns with the headers: SNP N eco1 eco2, which describe the data as above. The code will then output a results file comprising the original data plus the maximum number of reads with the highest evidence for coming from the second ecotype (n2max), the average over all the reads that could from the second ecotype (N2mean) and the log 10 Bayes factor (log10BF).
+
+## Running the simulations
+
+See the jupyter notebook for more how to run the simulations seen in the paper.
 
