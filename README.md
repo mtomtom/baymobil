@@ -1,6 +1,6 @@
-# bf_calculator
+# baymobil
 
-To install: pip install -i https://test.pypi.org/simple/ bf-calculator
+To install: pip install -i https://test.pypi.org/simple/ baymobile
 
 To run: 
 
