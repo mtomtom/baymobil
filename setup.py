@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.1.2' 
+VERSION = '0.1.5' 
 DESCRIPTION = 'Bayesian analysis of heterograft data'
 LONG_DESCRIPTION = 'A function to evaluate heterograft data based on error rate distributions taken from homograft data'
 
 # Setting up
 setup(
        # the name must match the folder name 'verysimplemodule'
-        name="baymobile", 
+        name="baymobil", 
         version=VERSION,
         author="Melissa Tomkins",
         author_email="melissa.tomkins@jic.ac.uk",

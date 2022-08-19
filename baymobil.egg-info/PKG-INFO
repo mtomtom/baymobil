@@ -1,0 +1,16 @@
+Metadata-Version: 1.1
+Name: baymobil
+Version: 0.1.4
+Summary: Bayesian analysis of heterograft data
+Home-page: UNKNOWN
+Author: Melissa Tomkins
+Author-email: melissa.tomkins@jic.ac.uk
+License: UNKNOWN
+Description: A function to evaluate heterograft data based on error rate distributions taken from homograft data
+Keywords: python,first package
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
