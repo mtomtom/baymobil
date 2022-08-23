@@ -1,6 +1,6 @@
 # baymobil
 
-To install: pip install -i https://test.pypi.org/simple/ baymobile
+To install: pip install -i https://test.pypi.org/simple/ baymobil
 
 To run: 
 
