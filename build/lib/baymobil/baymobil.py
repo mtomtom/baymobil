@@ -21,6 +21,9 @@ safebeta = np.vectorize(safebeta)
 
 ## Function to calculate the posterior ratio
 def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
+    ## From the Team conversation 23.08.22
+    """
+    Idea for NANs: We can compute the error rate for the homograft data, e_hom=(n_hom+1)/(N_hom+2), and for the heterograft data, e_het=(n_het+1)/(N_het+2). We know if e_het < e_hom that we'll get negative Bayes factors and we know that if the errors were consistent this wouldn't get below -2 so we can set the NAN to -2 in this case. If e_het > e_hom, we'll get positive Bayes factors. NANs will occur here for very high numbers of N or when n is about half of N for moderately high N, but there is still information in there and would be good to capture. In this case we could set the NAN to, say, +10 (anything above +5 is so high that the actual number doesn't really matter too much)."""
     N = int(N)
     alpha1 = nhomo1+1
     beta1 = Nhomo1-nhomo1+1
@@ -55,7 +58,11 @@ def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
 ## Data can be passed in three formats: single value, dataframe, file
 ## Default case = single values, nmax=10
 def run_bayes_analysis(data_list, nmax=10):
-    ## Detect data types in list and choose the correct process
+    """
+    Data passed as a list that can contain ints, dataframes, or filenames.
+    If dataframes or filenames, then headers need to be: SNP, N, n
+    Files need to be in csv format.
+    """
     if isinstance(data_list, list): 
         ## If 6 single values are passed, then return a single BF 
         if (len(data_list) == 6) & (all([isinstance(item, int) for item in data_list])):
@@ -74,7 +81,7 @@ def run_bayes_analysis(data_list, nmax=10):
             [df_hom_eco1, df_hom_eco2, het_file] = data_list
             run_bayes_analysis_files(df_hom_eco1, df_hom_eco2, het_file, nmax)
         ## If wrong length of list is passed, then print an error
-        if (len(data_list)!= 6 & len(data_list) != 3):
+        if (len(data_list)!= 6) & (len(data_list) != 3):
             print("Error: list should contain either 6 values, 3 dataframes or 3 filepaths.")
             return None
     else:
@@ -84,12 +91,15 @@ def run_bayes_analysis(data_list, nmax=10):
 
 ## Function to check that the files are in the appropriate format
 def check_data(data_file):
+    """
+    Column headings need to be "SNP","N","n
+    """
     df = pd.read_csv(data_file, low_memory=False, index_col = None)
     ### Check column headings
     cols = df.columns.to_list()
-    check_cols = ['SNP','N','eco2']
+    check_cols = ['SNP','N','n']
     if not set(check_cols).issubset(cols):
-        print("File must include columns: SNP N eco2")
+        print("File must include columns: SNP N n")
         raise ValueError('Files not formatted correctly.')
     ### Check values can be converted to numeric (if not already)
     cols = df.columns.drop(['SNP'])
@@ -107,16 +117,16 @@ def check_data(data_file):
         raise ValueError('Unable to convert values to numeric.')
 
     ## Need to check whether any eco2 columns are greater than the N columns, as this will cause the code to crash
-    error_values = len(df.loc[df["eco2"] > df["N"]])
+    error_values = len(df.loc[df["n"] > df["N"]])
     if error_values>0:
-        raise ValueError('Error: eco2 values cannot be greater than N')
+        raise ValueError('Error: n values cannot be greater than N')
     return df
 
 def check_data_df(df):
     cols = df.columns.to_list()
-    check_cols = ['SNP','N','eco2']
+    check_cols = ['SNP','N','n']
     if not set(check_cols).issubset(cols):
-        print("File must include columns: SNP N eco2")
+        print("File must include columns: SNP N n")
         raise ValueError('Files not formatted correctly.')
     ### Check values can be converted to numeric (if not already)
     cols = df.columns.drop(['SNP'])
@@ -134,14 +144,14 @@ def check_data_df(df):
         raise ValueError('Unable to convert values to numeric.')
 
     ## Need to check whether any eco2 columns are greater than the N columns, as this will cause the code to crash
-    error_values = len(df.loc[df["eco2"] > df["N"]])
+    error_values = len(df.loc[df["n"] > df["N"]])
     if error_values>0:
-        raise ValueError('Error: eco2 values cannot be greater than N')
+        raise ValueError('Error: n values cannot be greater than N')
     return df
 
 ## Apply all the functions and calculate the BF
 def calculate_evidence(df):
-    df["pos"] = df.apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.eco2, x.nmax), axis=1 )
+    df["pos"] = df.apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.n, x.nmax), axis=1 )
     df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
     df.drop(columns=["pos"], inplace=True)
     return df
@@ -152,8 +162,8 @@ def run_bayes_analysis_files(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nma
     df_hom_eco1 = check_data(df_hom_eco1)
     df_hom_eco2 = check_data(df_hom_eco2)
     ## Rename the columns in the homograft files
-    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
-    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
+    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'n': 'nhomo1'})
+    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'n': 'nhomo2'})
     ## Create a single dataframe with all of the values
     het_file_merged = pd.merge(df_het_file, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
     het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
@@ -182,8 +192,8 @@ def run_bayes_analysis_df(df_hom_eco1:pd.DataFrame, df_hom_eco2:pd.DataFrame, df
     df_hom_eco1 = check_data_df(df_hom_eco1)
     df_hom_eco2 = check_data_df(df_hom_eco2)
     ## Rename the columns in the homograft files
-    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'eco2': 'nhomo1'})
-    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'eco2': 'nhomo2'})
+    df_hom_eco1 = df_hom_eco1.rename(columns={'N': 'Nhomo1', 'n': 'nhomo1'})
+    df_hom_eco2 = df_hom_eco2.rename(columns={'N': 'Nhomo2', 'n': 'nhomo2'})
     ## Create a single dataframe with all of the values
     het_file_merged = pd.merge(df_het, df_hom_eco1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
     het_file_merged = pd.merge(het_file_merged, df_hom_eco2[["SNP","Nhomo2","nhomo2"]], on = "SNP")

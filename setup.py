@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.1.5' 
+VERSION = '0.1.10' 
 DESCRIPTION = 'Bayesian analysis of heterograft data'
 LONG_DESCRIPTION = 'A function to evaluate heterograft data based on error rate distributions taken from homograft data'
 
@@ -14,9 +14,7 @@ setup(
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
-        install_requires=["numpy","scipy","pandas"], # add any additional packages that 
-        # needs to be installed along with your package.
-        
+        install_requires=["numpy","scipy","pandas"], 
         keywords=['python', 'first package'],
         classifiers= [
             "Development Status :: 3 - Alpha",

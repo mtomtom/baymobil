@@ -137,6 +137,7 @@ def run_analysis(dfhom, dfhet, func_parameter):
     df["Method_B"] = df["n"]
     df.loc[df.Method_B>0, "Method_B"] = 1
     df.loc[(df.nhom1>0)|(df.nhom2>0),"Method_B"] = 0
+    df.to_csv("SNP_wise_values.csv",index=None)
 
     df_grouped = df.groupby([func_parameter,"transcript"]).sum().reset_index()
     

@@ -10,7 +10,6 @@ def load_data():
     """
     All simulation files should be in the "output" folder. This function loads in all files in that folder.
     """
-
     folder = "output"
     results_files = [f for f in listdir(folder) if isfile(join(folder, f))]
     ## Ensure we only have relevant files
@@ -60,15 +59,25 @@ def load_data():
     df_summed.loc[(df_summed.mobile > 0) & (df_summed.log10BF<1),"FN_bf"] = 1
 
     ## Define how many replicates need to be positive (default = all)
+
     df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_A==no_reps),"TP_Method_A"] = 1
-    df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_A==0),"TN_Method_A"] = 1
+    df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_A<no_reps),"TN_Method_A"] = 1
     df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_A==no_reps),"FP_Method_A"] = 1
-    df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_A==0),"FN_Method_A"] = 1
+    df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_A<no_reps),"FN_Method_A"] = 1
 
     df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_B == no_reps),"TP_Method_B"] = 1
-    df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_B==0),"TN_Method_B"] = 1
+    df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_B<no_reps),"TN_Method_B"] = 1
     df_summed.loc[(df_summed.mobile == 0) & (df_summed.Method_B == no_reps),"FP_Method_B"] = 1
-    df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_B==0),"FN_Method_B"] = 1
+    df_summed.loc[(df_summed.mobile > 0) & (df_summed.Method_B<no_reps),"FN_Method_B"] = 1
+
+    ## Check that all values have been assigned
+    if sum(df_summed[["TP_bf","TN_bf","FP_bf","FN_bf"]].sum()) != len(df_summed):
+        print("Error! BF values not assigned")
+    if sum(df_summed[["TP_Method_A","TN_Method_A","FP_Method_A","FN_Method_A"]].sum()) != len(df_summed):
+        print("Error! Method A values not assigned")
+    if sum(df_summed[["TP_Method_B","TN_Method_B","FP_Method_B","FN_Method_B"]].sum()) != len(df_summed):
+        print("Error! Method B values not assigned!")
+
     return df_summed
 
 def plot_data(df, func_parameter):
@@ -114,10 +123,10 @@ def plot_data(df, func_parameter):
     df = pd.DataFrame([val_list, bf_list, methoda_list, methodb_list])
     df = df.T
     df.columns = [func_parameter, "bf","methoda","methodb"]
-    df.to_csv("output/output" + func_parameter + "_.csv", index=None)
+    df.to_csv("output/plot_results" + func_parameter + "_.csv", index=None)
 
     plt.xlabel(func_parameter)
     plt.ylabel("Accuracy")
     plt.legend()
-    #plt.savefig("N_comp_p01q.png",dpi=300)
+    plt.savefig("output/results.png",dpi=300)
     plt.show()

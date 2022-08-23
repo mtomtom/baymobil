@@ -84,14 +84,11 @@ def create_homograft_data(N_values, q_values, N2_values, no_transcripts, constan
 
     return df[["Nhom1","Nhom2","nhom1","nhom2"]]
 
-def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_SNPs):
+def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_SNPs, mobile_def):
     settings_list = [N_values, q_values, N2_values]
     data = (list(itertools.product(*settings_list)))
     df = pd.DataFrame(data, columns = ['N','q',"N2_func"])
     df = pd.concat([df]*no_transcripts * no_SNPs)
-
-    ## Define our mobile transcripts - each transcript should have one unique definition which is kept the same for all parameter values
-    mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
     mobile_def = np.repeat(mobile_def, len(data * no_SNPs))
     df["mobile"] = mobile_def
 
@@ -119,15 +116,15 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
     df["SNP"] = snp_ids
     return df
 
-def run_analysis(dfhom, dfhet):
+def run_analysis(dfhom, dfhet, func_parameter):
     ## Merge the dataframes
     df = pd.concat([dfhet, dfhom], axis=1)
     ## Run Bayes analysis
+    print("Running Bayes...")
     df["log10BF"] = df.apply(lambda x: baymob.fasterpostN2(x.Nhom1,x.nhom1,x.Nhom2,x.nhom2,x.N,x.n,10)[2], axis=1)
+    print("Finished!")
 
     ## Sum up the Bayes Factors across SNPs: IDs are transcript_SNP_condition. So we sum all SNPs for each transcript for each condition
-
-    df["condition"] = df["SNP"].apply(lambda x: x.split("_")[2])
     df["transcript"] = df["SNP"].apply(lambda x: x.split("_")[0])
 
     ## Method A
@@ -140,8 +137,9 @@ def run_analysis(dfhom, dfhet):
     df["Method_B"] = df["n"]
     df.loc[df.Method_B>0, "Method_B"] = 1
     df.loc[(df.nhom1>0)|(df.nhom2>0),"Method_B"] = 0
+    df.to_csv("SNP_wise_values.csv",index=None)
 
-    df_grouped = df.groupby(["condition","transcript"]).sum().reset_index()
+    df_grouped = df.groupby([func_parameter,"transcript"]).sum().reset_index()
     
     ## As we have summed across the mobile values, these have now become counts, so we need to evaluate 0 and above 0 as False and True respectively
 
@@ -152,11 +150,12 @@ def run_analysis(dfhom, dfhet):
 
     return df_grouped
 
-def create_simulated_data():
+def create_simulated_data(func_parameter):
     params, param_names = load_parameters()
     dfhom = create_homograft_data(*params)
     ## Create replicates for heterograft data
     no_reps = params[param_names.index('no_reps')]
+    no_transcripts = params[param_names.index('no_transcripts')]
     ## Create output folder
     if os.path.exists('output'):
         shutil.rmtree('output')
@@ -164,7 +163,10 @@ def create_simulated_data():
     if not os.path.exists('output'):
         os.makedirs('output')
 
+    ## Define our mobile transcripts - each transcript should have one unique definition which is kept the same for all parameter values
+    mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
+
     for i in range(no_reps):
-        dfhet = create_heterograft_data(*params)
-        df = run_analysis(dfhom, dfhet)
+        dfhet = create_heterograft_data(*params, mobile_def)
+        df = run_analysis(dfhom, dfhet, func_parameter)
         df.to_csv("output/output" + str(i) + ".csv")
