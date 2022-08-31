@@ -76,10 +76,8 @@ Collating and plotting the data is then performed using the functions:
 df = baymob.load_data()
 baymob.plot_data_bf(df, func_parameter)
 ```
-
-![Alt text](baymobil/test_sims/Example2_fixed_data/fixed_data_N2.png "Title")
-[] there should be a Figure here
-
+<img src="baymobil/test_sims/Example2_fixed_data/fixed_data_N2.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
+The number of reads added to the mobile SNPs affects the performance of the Bayesian method
 
 ###### Case 2: Accuracy as a function of the number of added reads for "noisy" datasets
 
@@ -98,11 +96,11 @@ Real biological data are noisy and RNA-Seq read numbers spread by nature across 
 | no_transcripts | [1000]                              |
 | np_reps        | [1]                                 |
 
-[] Here should be a figure
+<img src="baymobil/test_sims/Example1_noisy_data/noisy_data_N2.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 
 As the accuracy of the method depends upon how well the error rates are defined in the homograft data, we can also show that if this is set to a constant value able to capture the error rate, then the accuracy of the method is improved.
 
-[] Here should be a figure
+<img src="baymobil/test_sims/Example3_noisy_data_fixednhom/noisy_data_N2_fixednhom.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 
 | Parameter           | Values                              |
 | -------------       | ----------------------------------- |
