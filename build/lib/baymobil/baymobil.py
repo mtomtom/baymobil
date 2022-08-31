@@ -48,11 +48,20 @@ def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
         postN2xN2[i]=postN2[i]*N2
     
     sumpostN2=sum(postN2)
-    postN2=postN2/sumpostN2
-    postN2xN2=postN2xN2/sumpostN2
-    logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
-    meanN2=sum(postN2xN2)
-    results = [meanN2,N2max,logBF21N2]
+    ## Need to handle the output if sumpostN2 has gone to zero
+    if sumpostN2 == 0:
+        print("Warning! Error rate in homograft higher than heterograft. Setting BF to -2.")
+        results = ["nd","nd",-2]
+    else:
+        postN2=postN2/sumpostN2
+        postN2xN2=postN2xN2/sumpostN2
+        if postN2[1] == 0:
+            print("Warning! Error rate in heterograft is significantly higher than in homograft. Setting BF to 10")
+            logBF21N2 = 10
+        else:
+            logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
+        meanN2=sum(postN2xN2)
+        results = [meanN2,N2max,logBF21N2]
     return results
 
 ## Data can be passed in three formats: single value, dataframe, file

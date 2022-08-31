@@ -80,7 +80,7 @@ def load_data():
 
     return df_summed
 
-def plot_data(df, func_parameter):
+def plot_data_all(df, func_parameter):
     """ This function plots the accuracy of each method as a function of the passed parameter """
     func_parameter_list = set(df[func_parameter].to_list())
     val_list = []
@@ -128,5 +128,36 @@ def plot_data(df, func_parameter):
     plt.xlabel(func_parameter)
     plt.ylabel("Accuracy")
     plt.legend()
+    plt.savefig("output/results.png",dpi=300)
+    plt.show()
+
+def plot_data_bf(df, func_parameter):
+    """ This function plots the accuracy of Bayes factors as a function of the passed parameter """
+    func_parameter_list = set(df[func_parameter].to_list())
+    val_list = []
+    bf_list = []
+    methoda_list = []
+    methodb_list = []
+
+    for val in func_parameter_list:
+        val_list.append(val)
+        plot_df = df[df[func_parameter]==val]
+        tp = plot_df["TP_bf"].sum()
+        fp = plot_df["FP_bf"].sum()
+        tn = plot_df["TN_bf"].sum()
+        fn = plot_df["FN_bf"].sum()
+        bf_accuracy = (tp + tn) / (tp + tn + fp + fn)
+        bf_list.append(bf_accuracy)
+        plt.plot(val, bf_accuracy,"kx")
+
+    plt.plot(val, bf_accuracy, "kx", label = "BF")
+
+    df = pd.DataFrame([val_list, bf_list])
+    df = df.T
+    df.columns = [func_parameter, "bf"]
+    df.to_csv("output/plot_results" + func_parameter + "_.csv", index=None)
+
+    plt.xlabel(func_parameter)
+    plt.ylabel("Accuracy")
     plt.savefig("output/results.png",dpi=300)
     plt.show()
