@@ -52,13 +52,14 @@ def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
     if sumpostN2 == 0:
         print("Warning! Error rate in homograft higher than heterograft. Setting BF to -2.")
         results = ["nd","nd",-2]
-    elif sumpostN2 == np.inf:
-        print("Warning! Error rate in heterograft is far higher than homograft. Setting BF to 10.")
-        results = ["nd","nd",10]
     else:
         postN2=postN2/sumpostN2
         postN2xN2=postN2xN2/sumpostN2
-        logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
+        if postN2[1] == 0:
+            print("Warning! Error rate in heterograft is significantly higher than in homograft. Setting BF to 10")
+            logBF21N2 = 10
+        else:
+            logBF21N2 = np.log10(postN2[N2max+1]/postN2[1]) # +1 because of the index
         meanN2=sum(postN2xN2)
         results = [meanN2,N2max,logBF21N2]
     return results

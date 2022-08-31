@@ -31,11 +31,12 @@ def load_parameters():
 
     ## Load in the number of replicates, and SNPs per transcript
     no_reps = int(config.get("Simulation parameters","no_reps"))
-    no_SNPs = int(config.get("Simulation parameters","no_SNPs"))
+    no_snps = int(config.get("Simulation parameters","no_snps"))
     min_read_thresh = int(config.get("Simulation parameters","min_read_thresh"))
+    snp_thresh = int(config.get("Simulation parameters","snp_thresh"))
 
-    params = [N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value, random_N, random_Nhom, random_q, no_reps, no_SNPs]
-    param_names = ["N_values", "q_values", "N2_values", "no_transcripts", "constant_Nhom", "constant_Nhom_value", "random_N", "random_Nhom", "random_q", "no_reps", "no_SNPs"]
+    params = [N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value, random_N, random_Nhom, random_q, no_reps, no_snps, snp_thresh, min_read_thresh]
+    param_names = ["N_values", "q_values", "N2_values", "no_transcripts", "constant_Nhom", "constant_Nhom_value", "random_N", "random_Nhom", "random_q", "no_reps", "no_snps","snp_thresh", "min_read_thresh"]
     return params, param_names
 
 def create_errors(row, q):
@@ -43,14 +44,14 @@ def create_errors(row, q):
         nhom1 = (rand_numbs < q).sum()
         return int(nhom1)
 
-def create_homograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_SNPs):
+def create_homograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_snps, snp_thresh, min_read_thresh):
     """The homograft dataframe is only created once and used to evaluate all heterograft replicates
     """
     ## Create iterations of all parameter values
     settings_list = [N_values, q_values, N2_values]
     data = (list(itertools.product(*settings_list)))
     df = pd.DataFrame(data, columns = ['N','q',"N2_func"])
-    df = pd.concat([df]*no_transcripts * no_SNPs)
+    df = pd.concat([df]*no_transcripts * no_snps)
 
     if constant_Nhom:
         df["Nhom1"] = constant_Nhom_value
@@ -75,7 +76,7 @@ def create_homograft_data(N_values, q_values, N2_values, no_transcripts, constan
     ## First value is the transcript number
     for i in range(no_transcripts):
         ## Second value is the SNP no
-        for j in range(no_SNPs):
+        for j in range(no_snps):
             ## Third value is the condition number
             for k in range(len(data)):
                 snp_ids.append(str(i) + "_" + str(j) + "_" + str(k))
@@ -84,12 +85,12 @@ def create_homograft_data(N_values, q_values, N2_values, no_transcripts, constan
 
     return df[["Nhom1","Nhom2","nhom1","nhom2"]]
 
-def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_SNPs, mobile_def):
+def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, constant_Nhom, constant_Nhom_value,random_N, random_Nhom, random_q, no_reps, no_snps, snp_thresh, min_read_thresh, mobile_def):
     settings_list = [N_values, q_values, N2_values]
     data = (list(itertools.product(*settings_list)))
     df = pd.DataFrame(data, columns = ['N','q',"N2_func"])
-    df = pd.concat([df]*no_transcripts * no_SNPs)
-    mobile_def = np.repeat(mobile_def, len(data * no_SNPs))
+    df = pd.concat([df]*no_transcripts * no_snps)
+    mobile_def = np.repeat(mobile_def, len(data * no_snps))
     df["mobile"] = mobile_def
 
     ## Apply random flags (if appropriate)
@@ -100,7 +101,17 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
 
     ## Add in errors and mobile reads
     df["n"] = df.apply(lambda x: create_errors(x.N, x.q), axis = 1)
+    #df["N2"] = df["N2_func"] * df["mobile"] * df["q"] * df["N"]
+
+    ## Calculate mobile reads based on stds
+    df["variance"] = df["N"] * df["q"] * (1-df["q"])
+    df["std"] = np.sqrt(df["variance"])
+    df["N2_func"] = 5 * np.ceil(df["std"])
     df["N2"] = df["N2_func"] * df["mobile"] * df["q"] * df["N"]
+
+    ## Make sure that we have integer values, and that the mobile SNPs have at least 1 read added
+    print("Changes made")
+    df["N2"] = np.ceil(df["N2"])
 
     df["n"] = df["n"] + df["N2"]
     ## Create and add in the SNP IDs
@@ -108,7 +119,7 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
      ## First value is the transcript number
     for i in range(no_transcripts):
         ## Second value is the SNP no
-        for j in range(no_SNPs):
+        for j in range(no_snps):
             ## Third value is the condition number
             for k in range(len(data)):
                 snp_ids.append(str(i) + "_" + str(j)+ "_" + str(k))
@@ -116,7 +127,7 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
     df["SNP"] = snp_ids
     return df
 
-def run_analysis(dfhom, dfhet, func_parameter):
+def run_analysis(dfhom, dfhet, func_parameter, snp_thresh):
     ## Merge the dataframes
     df = pd.concat([dfhet, dfhom], axis=1)
     ## Run Bayes analysis
@@ -143,8 +154,6 @@ def run_analysis(dfhom, dfhet, func_parameter):
     
     ## As we have summed across the mobile values, these have now become counts, so we need to evaluate 0 and above 0 as False and True respectively
 
-    ## Define how many SNPs need to be positive (default = 1). This can be changed for more conservative analysis
-    snp_thresh = 1
     df_grouped.loc[df_grouped.Method_A>=snp_thresh,"Method_A"] = 1
     df_grouped.loc[df_grouped.Method_B>= snp_thresh,"Method_B"] = 1
 
@@ -156,6 +165,11 @@ def create_simulated_data(func_parameter):
     ## Create replicates for heterograft data
     no_reps = params[param_names.index('no_reps')]
     no_transcripts = params[param_names.index('no_transcripts')]
+    snp_thresh = params[param_names.index('snp_thresh')]
+    no_snps = params[param_names.index('no_snps')]
+    if snp_thresh > no_snps:
+        print("Error! snp_thresh cannot be greater than no_snps")
+        SystemExit()
     ## Create output folder
     if os.path.exists('output'):
         shutil.rmtree('output')
@@ -165,8 +179,7 @@ def create_simulated_data(func_parameter):
 
     ## Define our mobile transcripts - each transcript should have one unique definition which is kept the same for all parameter values
     mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
-
     for i in range(no_reps):
         dfhet = create_heterograft_data(*params, mobile_def)
-        df = run_analysis(dfhom, dfhet, func_parameter)
+        df = run_analysis(dfhom, dfhet, func_parameter, snp_thresh)
         df.to_csv("output/output" + str(i) + ".csv")
