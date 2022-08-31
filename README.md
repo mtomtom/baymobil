@@ -17,7 +17,7 @@ baymobil has two basic functions:
 1. Create and analyse simulated datasets, comparing performance across different approaches
 2. Analyse existing RNA-Seq datasets.
 
-Here, we will examine these two cases separately, describing all of the relevant functions and how they are called within the package.
+Here, we will examine these two cases separately, describing all of the relevant functions and how they are called within the package. Both cases involve the calculation of Bayes factors, which describe the evidence that some or all reads associated with SNPs from type 2 (non-local - potentially indicative of transported transcripts) actually come from type 2, compared with the evidence that all such reads can be explained sequencing errors. SNP-specific error rates can be inferred from homograft data (e.g. type1:type1), as described in (ref our paper).
 
 ##### Creating simulated datasets
 Simulated datasets can be used to test the performance of different mobile transcript identification approaches. They provide correctly labelled data, along with the ability to alter the rate at which we see sequencing errors, and also the sequencing depths. Our simulated datasets create files designed to represent processed RNA-Seq data. Each entry represents a single SNP, and has values for the reads that correspond to the local type N (ecotype, species or cultivar), and the distal type, n. Sequencing errors can be the same for all SNPs, or vary between them. We can also specify how many SNPs each transcript has, and how many replicates to simulate.
@@ -77,7 +77,7 @@ df = baymob.load_data()
 baymob.plot_data_bf(df, func_parameter)
 ```
 
-
+![Alt text](baymobil/test_sims/Example2_fixed_data/fixed_data_N2.png "Title")
 [] there should be a Figure here
 
 
