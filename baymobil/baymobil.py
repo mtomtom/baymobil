@@ -5,6 +5,8 @@ import warnings
 from tqdm import tqdm
 import multiprocessing as mp
 import sys
+import scipy.special
+import numpy.ma as ma
 
 ## Define the main functions
 def safebeta(N,n, alpha,beta):
@@ -18,6 +20,18 @@ def safebeta(N,n, alpha,beta):
     return facterm / (N+alpha)
 
 safebeta = np.vectorize(safebeta)
+
+def logbeta(N,n, alpha,beta):
+    facterm = 1.0
+    if alpha>1:
+        a = np.arange(1, alpha)
+        facterm = (np.log(n+a) - np.log(N+a)).sum()
+    if beta > 1.0:
+        a = np.arange(1, beta)
+        facterm = facterm + (np.log(N-n+a) - np.log(N+alpha+a)).sum()
+    return facterm - np.log(N+alpha)
+
+logbeta = np.vectorize(logbeta)
 
 ## Function to calculate the posterior ratio
 def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
@@ -64,6 +78,68 @@ def fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax):
         results = [meanN2,N2max,logBF21N2]
     return results
 
+def fasterpostN2new(Nhomo1, nhomo1, Nhomo2, nhomo2, N, n, nmax):
+    """
+    New version of the fastpostN2 function that removes the loops, and also uses log values to allow for higher read depths
+    """
+
+    ## Define functions to be used
+    def create_n2_array(val):
+        n2_min = max(0,val-n)
+        n2_max = min(N-n, val)
+        n2_array = np.arange(n2_min, n2_max+1)
+        return(n2_array)
+
+    def calculate_postN2(N2_val, n2_arrays_val):
+        return scipy.special.logsumexp(logbeta(N-N2_val,n-N2_val+n2_arrays_val,alpha1,beta1) + logbeta(N2_val,n2_arrays_val,alpha2,beta2))
+    
+    ## Initialise the paramters
+    alpha1 = nhomo1+1
+    beta1 = Nhomo1-nhomo1+1
+    alpha2 = nhomo2+1
+    beta2 = Nhomo2-nhomo2+1
+    N2_values = np.arange(0,min(N+1,n+nmax+1))
+    N2_values = N2_values.astype(int)
+
+    ## For each element in N2_values, create an array between n2_min and m2_max
+    #n2_arrays = [create_n2_array(x) for x in N2_values] 
+    n2_arrays = map(create_n2_array, N2_values)
+    #postN2 = [calculate_postN2(x,y) for x,y in zip(N2_values,n2_arrays)]
+    postN2 = map(calculate_postN2, N2_values, n2_arrays)
+
+    ## postN2 is log(postN2)
+    i = np.log(np.arange(0,min(N+1,n+nmax+1)) + 1)
+    ## Subtract the log of the array
+    postN2 = list(postN2) - i
+
+    ## Multiply by log N2_values
+    x = ma.log(N2_values)
+    x = x.filled(0)
+    postN2xN2 = postN2 + x
+
+    ## Sum the values
+    sumpostN2=scipy.special.logsumexp(postN2)
+
+    ## Need to get the maximum of the posterior, ignoring N2 = 0 (as that's hypothesis 1 - no mobile reads)
+    postN2_2 = postN2[N2_values > 0]
+    N2_values_2 = N2_values[N2_values>0]
+    N2max = N2_values_2[postN2_2==max(postN2_2)][0]
+
+    postN2 = postN2 - sumpostN2
+    postN2xN2 = postN2xN2 - sumpostN2
+    logBF21N2 = (postN2[N2max] - postN2[0])/np.log(10)
+
+    
+    postN2xN2 = np.exp(postN2xN2)
+
+    ## There may be a better way of doing this, but this will do for now. As the postN2xN2 array was supposed to have been multiplied by the N2_values, the first value should be 0. Subsequent multiplications and divisions wouldn't have changed this.  We therefore set these values to 0 here.
+    postN2xN2[N2_values==0]=0
+    meanN2 = sum(postN2xN2)
+    ## Set N2max to N2_values where postN2 is maximised
+    
+    results = [meanN2,N2max,logBF21N2]
+    return results
+
 ## Data can be passed in three formats: single value, dataframe, file
 ## Default case = single values, nmax=10
 def run_bayes_analysis(data_list, nmax=10):
@@ -76,7 +152,7 @@ def run_bayes_analysis(data_list, nmax=10):
         ## If 6 single values are passed, then return a single BF 
         if (len(data_list) == 6) & (all([isinstance(item, int) for item in data_list])):
             Nhomo1,nhomo1,Nhomo2,nhomo2,N,n = data_list
-            [meanN2,N2max,log10BF] = fasterpostN2(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax)
+            [meanN2,N2max,log10BF] = fasterpostN2new(Nhomo1,nhomo1,Nhomo2,nhomo2,N,n,nmax)
             return meanN2, N2max, log10BF
         ## If 3 dataframes are passed, then process and return a single dataframe
         if (len(data_list) == 3) & (all([isinstance(item, pd.DataFrame) for item in data_list])):  
@@ -160,7 +236,7 @@ def check_data_df(df):
 
 ## Apply all the functions and calculate the BF
 def calculate_evidence(df):
-    df["pos"] = df.apply(lambda x:fasterpostN2(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.n, x.nmax), axis=1 )
+    df["pos"] = df.apply(lambda x:fasterpostN2new(x.Nhomo1,x.nhomo1,x.Nhomo2,x.nhomo2,x.N,x.n, x.nmax), axis=1 )
     df[['meanN2','N2max','log10BF']] = pd.DataFrame(df.pos.tolist(), index= df.index)
     df.drop(columns=["pos"], inplace=True)
     return df

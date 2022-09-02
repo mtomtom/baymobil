@@ -178,7 +178,10 @@ def create_simulated_data(func_parameter):
         os.makedirs('output')
 
     ## Define our mobile transcripts - each transcript should have one unique definition which is kept the same for all parameter values
-    mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
+    #mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
+    mobile_no = int(no_transcripts / 2)
+    mobile_def = np.concatenate((np.ones(mobile_no), np.zeros(no_transcripts - mobile_no)))
+    ## For every mobile create a non-mobile?
     for i in range(no_reps):
         dfhet = create_heterograft_data(*params, mobile_def)
         df = run_analysis(dfhom, dfhet, func_parameter, snp_thresh)
