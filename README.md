@@ -40,14 +40,14 @@ All of these parameters are contained in the file "parameters.cfg", which needs 
 | min_read_thresh     | int       | SNP threshold for Method A                |
 
 
-###### Case 1: Accuracy as a function of the number of added reads
-In this example, we are going to investigate the effect of changing the number of reads added to SNPs designated as being from the second plant type ($n$) on the accuracy of the Bayesian analysis. We repeat the simulations across a range of SNPs per transcript, ranging from 1 to 10.
+# Case 1: Accuracy as a function of the read depth #
 
+In this example, we are going to investigate the effect of the read depth ($N$) on the accuracy of the Bayesian analysis, assuming that both homograft and heterograft are sequenced to the same depth. 
 | Parameter      | Values                              |
 | -------------  | ----------------------------------- |
-| N_values       | [1000]                              |
+| N_values       | [20,40,60,80,100,120,140,160,180,200,220,240,260,280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500]|
 | q_values       | [0.01]                              |
-| N2_values      | [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] | 
+| N2_values      | [5] | 
 | constan_Nhom   | False                               |
 | random_N       | False                               |
 | random_Nhom    | False                               |
@@ -64,7 +64,7 @@ Once the parameters.cfg file has been updated, the simulations can be run with:
 import baymobil as baymob
 # Define the parameter that we are varying
 func_parameter = 'N2_values'
-baymob.simulations.create_simulated_data(func_parameter)
+baymob.create_simulated_data(func_parameter)
 ```
 
 This function should be called from the same folder as the "parameter.cfg" file. It will create a folder called "output", deleting any previous "output" folders first, and all results will go into this folder. Each replicate will have its own output<$R$>.csv file, with $R$ being the replicate ID.
@@ -79,16 +79,18 @@ baymob.plot_data_bf(df, func_parameter)
 <img src="baymobil/test_sims/Example2_fixed_data/fixed_data_N2.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 The number of reads added to the mobile SNPs affects the performance of the Bayesian method
 
-###### Case 2: Accuracy as a function of the number of added reads for "noisy" datasets
+# Case 2: Accuracy as a function of read depth for "noisy" datasets
 
-Real biological data are noisy and RNA-Seq read numbers spread by nature across a certain range, we can account for this in our simulations through the use of random values for $N$ and $q$. When the random_N or random_Nhom flags are set to "True", then the respective $N$ or $Nhom$ for each SNP is initialised using a random uniform number between 10 and N_values. In the same way, if random_q is set to "True", then $q$ is initialised using a random number drawn from a uniform distribution between 0 and q_values. 
+Real biological data are noisy, with read depths being spread across a range of values, rather than all being the same. We can simulate this by setting each individual N parameter to a random number from a uniform distribution between 10 and N. 
+
+This is controlled in the parameters.cfg file by setting the random_N flag to "True"
 
 
 | Parameter      | Values                              |
 | -------------  | ----------------------------------- |
-| N_values       | [1000]                              |
+| N_values       | [20,40,60,80,100,120,140,160,180,200,220,240,260,280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500]                             |
 | q_values       | [0.01]                              |
-| N2_values      | [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] | 
+| N2_values      | [5] | 
 | constan_Nhom   | False                               |
 | random_N       | True                                |
 | random_Nhom    | True                                |
@@ -104,9 +106,9 @@ As the accuracy of the method depends upon how well the error rates are defined 
 
 | Parameter           | Values                              |
 | -------------       | ----------------------------------- |
-| N_values            | [1000]                              |
+| N_values            | [[20,40,60,80,100,120,140,160,180,200,220,240,260,280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500]]                              |
 | q_values            | [0.01]                              |
-| N2_values           | [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] | 
+| N2_values           | [5] | 
 | constan_Nhom        | True                                |
 | constant_Nhom_value | 1000                                |
 | random_N            | True                                |
