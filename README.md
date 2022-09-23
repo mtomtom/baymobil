@@ -76,7 +76,7 @@ Collating and plotting the data is then performed using the functions:
 df = baymob.load_data()
 baymob.plot_data_bf(df, func_parameter)
 ```
-<img src="baymobil/test_sims/Example2_fixed_data/fixed_data_N2.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
+<img src="baymobil/test_sims/Case1/output/results.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 The number of reads added to the mobile SNPs affects the performance of the Bayesian method
 
 # Case 2: Accuracy as a function of read depth for "noisy" datasets
@@ -98,7 +98,7 @@ This is controlled in the parameters.cfg file by setting the random_N flag to "T
 | no_transcripts | [1000]                              |
 | np_reps        | [1]                                 |
 
-<img src="baymobil/test_sims/Example1_noisy_data/noisy_data_N2.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
+<img src="baymobil/test_sims/Case1/output/results.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 
 As the accuracy of the method depends upon how well the error rates are defined in the homograft data, we can also show that if this is set to a constant value able to capture the error rate, then the accuracy of the method is improved.
 
@@ -108,7 +108,7 @@ The Bayesian method relies on the error rate being well defined in the homograft
 
 This setting is the same as for Case 2, but with the constant_Nhom flag set to True, and the constant_Nhom_value set to 1000
 
-<img src="baymobil/test_sims/Example3_noisy_data_fixednhom/noisy_data_N2_fixednhom.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
+<img src="baymobil/test_sims/Case3/output/results.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 
 | Parameter           | Values                              |
 | -------------       | ----------------------------------- |
