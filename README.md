@@ -156,8 +156,7 @@ This next section will look at running the Bayesian analysis for standalone data
 | baymob.run\_bayes\_analysis\_df() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on dataframes |
 | baymob.run\_bayes\_analysis() | User | Main function for the anaylsis |
 
-
-
+The analysis can be run using individual values, pandas dataframes, or using data in files. For the latter two cases, the data needs to be in the format shown in the table below.
 
 ###### Input data table {#inputdatatable}
 | Reads from t1/t1 homograft | Reads from t1/t1 homograft | Reads from t2/t2 homograft | Reads from t2/t2 homograft | heterograft reads | heterograft reads |
