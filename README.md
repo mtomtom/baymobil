@@ -63,7 +63,7 @@ Once the parameters.cfg file has been updated, the simulations can be run with:
 ```
 import baymobil as baymob
 # Define the parameter that we are varying
-func_parameter = 'N2_values'
+func_parameter = 'N'
 baymob.create_simulated_data(func_parameter)
 ```
 
