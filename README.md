@@ -102,11 +102,17 @@ This is controlled in the parameters.cfg file by setting the random_N flag to "T
 
 As the accuracy of the method depends upon how well the error rates are defined in the homograft data, we can also show that if this is set to a constant value able to capture the error rate, then the accuracy of the method is improved.
 
+# Case 3: Noisy N data with constant homograft data
+
+The Bayesian method relies on the error rate being well defined in the homograft data. The performance is increased with homograft data with a constant read depth.
+
+This setting is the same as for Case 2, but with the constant_Nhom flag set to True, and the constant_Nhom_value set to 1000
+
 <img src="baymobil/test_sims/Example3_noisy_data_fixednhom/noisy_data_N2_fixednhom.png" alt="The number of reads added to the mobile SNPs affects the performance of the Bayesian method" width="500"/>
 
 | Parameter           | Values                              |
 | -------------       | ----------------------------------- |
-| N_values            | [[20,40,60,80,100,120,140,160,180,200,220,240,260,280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500]]                              |
+| N_values            | [20,40,60,80,100,120,140,160,180,200,220,240,260,280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500]                              |
 | q_values            | [0.01]                              |
 | N2_values           | [5] | 
 | constan_Nhom        | True                                |
@@ -116,6 +122,7 @@ As the accuracy of the method depends upon how well the error rates are defined 
 | random_q            | True                                |
 | no_transcripts      | [1000]                              |
 | np_reps             | [1]                                 |
+
 
 ###### Key functions for running and plotting the simulations
 
@@ -136,7 +143,7 @@ As the accuracy of the method depends upon how well the error rates are defined 
 This next section will look at running the Bayesian analysis for standalone datasets, taken from RNA-Seq data. Here, the main function is passed a list that either contains integers (single datapoint), dataframes, or filenames.
 
 
-###### Key functions for running and plotting the simulations
+###### Key functions for running the Bayesian analysis on RNA-Seq data
 
 | Function | Calling function | Description |
 | ---------- | ---------------------- | ------------------- |
@@ -148,18 +155,6 @@ This next section will look at running the Bayesian analysis for standalone data
 | baymob.run\_bayes\_analysis\_files() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on files  |
 | baymob.run\_bayes\_analysis\_df() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on dataframes |
 | baymob.run\_bayes\_analysis() | User | Main function for the anaylsis |
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
