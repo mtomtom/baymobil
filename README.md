@@ -156,8 +156,7 @@ This next section will look at running the Bayesian analysis for standalone data
 | baymob.run\_bayes\_analysis\_df() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on dataframes |
 | baymob.run\_bayes\_analysis() | User | Main function for the anaylsis |
 
-
-
+The analysis can be run using individual values, pandas dataframes, or using data in files. For the latter two cases, the data needs to be in the format shown in the table below.
 
 ###### Input data table {#inputdatatable}
 | Reads from t1/t1 homograft | Reads from t1/t1 homograft | Reads from t2/t2 homograft | Reads from t2/t2 homograft | heterograft reads | heterograft reads |
@@ -168,3 +167,23 @@ This next section will look at running the Bayesian analysis for standalone data
 | Nhom1                      | nhom1                      | Nhom2                      | nhom2                      | N                 | n                 |
 | 1000                       | 10                         | 1000                       | 10                         | 1000              | 30                |
 
+Examples of test data can be found in the folder:
+
+To run the test data:
+
+```
+## Run the Bayesian analysis on the test data
+import baymobil as baymob
+import pandas as pd
+
+## Run as dataframes
+dfhom1 = pd.read_csv("hom1_data.csv", index_col=None)
+dfhom2 = pd.read_csv("hom2_data.csv", index_col=None)
+dfhet = pd.read_csv("het_data.csv", index_col = None)
+
+df_results = baymob.run_bayes_analysis([dfhom1, dfhom2, dfhet])
+display(df_results)
+
+## Run using the filenames
+baymob.run_bayes_analysis(["hom1_data.csv", "hom2_data.csv", "het_data.csv"])
+```
