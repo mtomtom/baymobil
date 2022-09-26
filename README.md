@@ -167,7 +167,7 @@ The analysis can be run using individual values, pandas dataframes, or using dat
 | Nhom1                      | nhom1                      | Nhom2                      | nhom2                      | N                 | n                 |
 | 1000                       | 10                         | 1000                       | 10                         | 1000              | 30                |
 
-Examples of test data can be found in the folder:
+Examples of test data can be found in the folder: RNA_Seq_test_data/
 
 To run the test data:
 
