@@ -1,3 +1,7 @@
+### NEW: baymobil is now available as a streamlit web app ###
+
+To access baymobil: https://mtomtom-baymobil-app-baymobil-app-ibfvcr.streamlit.app/
+
 ### Tutorial for baymobil: A Python package for Bayesian analysis of RNA-Seq data for detecting mobile mRNA in grafting experiments
 
 
