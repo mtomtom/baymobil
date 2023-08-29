@@ -101,7 +101,16 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
 
     ## Add in errors and mobile reads
     df["n"] = df.apply(lambda x: create_errors(x.N, x.q), axis = 1)
-    df["N2"] = df["N2_func"] * df["mobile"] * df["q"] * df["N"]
+    #df["N2"] = df["N2_func"] * df["mobile"] * df["q"] * df["N"]
+
+    ## Calculate mobile reads based on stds
+    df["variance"] = df["N"] * df["q"] * (1-df["q"])
+    df["std"] = np.sqrt(df["variance"]) ## q*N = Expected number of errors std of expected no.
+    df["N2_func"] = 5 * np.ceil(df["std"])
+    df["N2"] = df["N2_func"] * df["mobile"] #* df["q"] * df["N"]
+
+    ## Make sure that we have integer values, and that the mobile SNPs have at least 1 read added
+    df["N2"] = np.ceil(df["N2"])
 
     df["n"] = df["n"] + df["N2"]
     ## Create and add in the SNP IDs
@@ -168,7 +177,10 @@ def create_simulated_data(func_parameter):
         os.makedirs('output')
 
     ## Define our mobile transcripts - each transcript should have one unique definition which is kept the same for all parameter values
-    mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
+    #mobile_def = random.choices([True, False], weights=[0.5, 0.5], k=no_transcripts)
+    mobile_no = int(no_transcripts / 2)
+    mobile_def = np.concatenate((np.ones(mobile_no), np.zeros(no_transcripts - mobile_no)))
+    ## For every mobile create a non-mobile?
     for i in range(no_reps):
         dfhet = create_heterograft_data(*params, mobile_def)
         df = run_analysis(dfhom, dfhet, func_parameter, snp_thresh)

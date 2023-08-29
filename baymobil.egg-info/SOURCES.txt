@@ -2,6 +2,7 @@ README.md
 setup.py
 baymobil/__init__.py
 baymobil/baymobil.py
+baymobil/baymobil_old.py
 baymobil/plot_data.py
 baymobil/simulations.py
 baymobil/test_baymobil.py
