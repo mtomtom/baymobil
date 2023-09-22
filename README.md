@@ -149,14 +149,16 @@ This next section will look at running the Bayesian analysis for standalone data
 
 ###### Key functions for running the Bayesian analysis on RNA-Seq data
 
+baymobil.run\_bayes is an overloaded function, which handles input based on its type. run\_bayes(df, int), where the int is the value for "nmax", will run the analysis on a dataframe. run\_bayes([filepath, filepath, filepath],int) will run the analysis taking 3 files as the input (homograft1, homograft2, and heterograft. run\_bayes([int, int, int, int, int, int], int) will run the analysis on a single data point ([Nh1, nh1, Nh2, nh2, N, n], nmax).
+
 | Function | Calling function | Description |
 | ---------- | ---------------------- | ------------------- |
 | baymob.safebeta() | baymob.run\_bayes\_analysis() | Function to calculate and return the values for the beta function |
 | baymob.fasterpostN2() | baymob.run\_bayes() | Contains all of the Bayesian analysis |
 | baymob.check\_data() | baymob.run\_bayes() |  Checks the validity of the data |
-| baymob.run\_bayes([fname1, fname2, fname3], nmax) |  | Runs the Bayesian analysis on files  |
-| baymob.run\_bayes(df, nmax) | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on dataframes |
-| baymob.run\_bayes\_analysis() | User | Main function for the anaylsis: overloaded function. 3 possibilities for calling (pass files, dataframe, or values) |
+| baymob.run\_bayes([fname1, fname2, fname3], nmax) | User | Runs the Bayesian analysis on files  |
+| baymob.run\_bayes(df, nmax) | User | Runs the Bayesian analysis on dataframes |
+| baymob.run\_bayes([int, int, int, int, int, int], nmax) | User | Runs the Bayesian analysis on single values |
 
 The analysis can be run using individual values, pandas dataframes, or using data in files. For the latter two cases, the data needs to be in the format shown in the table below.
 
