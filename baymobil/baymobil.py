@@ -1,4 +1,5 @@
 ### Baymobil takes in 2 sets of homograft data, and 1 set of heterograft data, and compares the SNP specific error rates between the heterograft and homograft data sets. If these differ significantly, then the assumption is that the heterograft data contains both errors and reads from mobile transcripts, suggesting that they come from transcripts that have been transported across the graft junction (mobile)
+
 import numpy as np
 import scipy.special
 import numpy.ma as ma
@@ -118,7 +119,7 @@ def check_data(df):
 @dispatch(int, int, int, int, int, int, int)
 def run_bayes(Nh1, nh1, Nh2, nh2, N, n, nmax):
     result = fasterpostN2(Nh1, nh1, Nh2, nh2, N, n, nmax)
-    print(result)
+    return result
 
 # passing a single dataframe. Needs to include columns: SNP N n Nh1 nh1 Nh2 nh2
 @dispatch(pd.DataFrame, int)
