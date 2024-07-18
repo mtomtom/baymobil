@@ -149,16 +149,16 @@ This next section will look at running the Bayesian analysis for standalone data
 
 ###### Key functions for running the Bayesian analysis on RNA-Seq data
 
+baymobil.run\_bayes is an overloaded function, which handles input based on its type. run\_bayes(df, int), where the int is the value for "nmax", will run the analysis on a dataframe. run\_bayes(filepath, filepath, filepath,int) will run the analysis taking 3 files as the input (homograft1, homograft2, and heterograft. run\_bayes(int, int, int, int, int, int, int) will run the analysis on a single data point (Nh1, nh1, Nh2, nh2, N, n, nmax).
+
 | Function | Calling function | Description |
 | ---------- | ---------------------- | ------------------- |
 | baymob.safebeta() | baymob.run\_bayes\_analysis() | Function to calculate and return the values for the beta function |
-| baymob.fasterpostN2() | baymob.calculate\_evidence() | Contains all of the Bayesian analysis |
-| baymob.check\_data() | baymob.run\_bayes\_analysis() |  Checks the validity of the data |
-| baymob.check\_data\_df() | baymob.run\_bayes\_analysis() | Checks the validity of the dataframes |
-| baymob.calculate\_evidence() | baymob.run\_bayes\_analysis() |Passes the given data to the fasterpostN2 function |
-| baymob.run\_bayes\_analysis\_files() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on files  |
-| baymob.run\_bayes\_analysis\_df() | baymob.run\_bayes\_analysis() | Runs the Bayesian analysis on dataframes |
-| baymob.run\_bayes\_analysis() | User | Main function for the anaylsis |
+| baymob.fasterpostN2() | baymob.run\_bayes() | Contains all of the Bayesian analysis |
+| baymob.check\_data() | baymob.run\_bayes() |  Checks the validity of the data |
+| baymob.run\_bayes(fname1, fname2, fname3, nmax) | User | Runs the Bayesian analysis on files  |
+| baymob.run\_bayes(df, nmax) | User | Runs the Bayesian analysis on dataframes |
+| baymob.run\_bayes(int, int, int, int, int, int, nmax) | User | Runs the Bayesian analysis on single values |
 
 The analysis can be run using individual values, pandas dataframes, or using data in files. For the latter two cases, the data needs to be in the format shown in the table below.
 
@@ -168,7 +168,7 @@ The analysis can be run using individual values, pandas dataframes, or using dat
 |                            |                            |                            |                            |                   |                   |
 | Type 1 SNP                 | Type 2 SNP                 | Type 2 SNP                 | Type 1 SNP                 | Local type SNP    | Distal type SNP   |
 |                            |                            |                            |                            |                   |                   |
-| Nhom1                      | nhom1                      | Nhom2                      | nhom2                      | N                 | n                 |
+| Nh1                        | nh1                        | Nh2                        | nh2                        | N                 | n                 |
 | 1000                       | 10                         | 1000                       | 10                         | 1000              | 30                |
 
 Examples of test data can be found in the folder: RNA_Seq_test_data/
@@ -181,13 +181,11 @@ import baymobil as baymob
 import pandas as pd
 
 ## Run as dataframes
-dfhom1 = pd.read_csv("hom1_data.csv", index_col=None)
-dfhom2 = pd.read_csv("hom2_data.csv", index_col=None)
-dfhet = pd.read_csv("het_data.csv", index_col = None)
+dftest = pd.read_csv("test_data.csv", index_col=None)
 
-df_results = baymob.run_bayes_analysis([dfhom1, dfhom2, dfhet])
+df_results = baymob.run_bayes(dftest, 10)
 display(df_results)
 
 ## Run using the filenames
-baymob.run_bayes_analysis(["hom1_data.csv", "hom2_data.csv", "het_data.csv"])
+baymob.run_bayes(["hom1_data.csv", "hom2_data.csv", "het_data.csv"])
 ```
