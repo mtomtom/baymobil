@@ -118,7 +118,7 @@ def check_data(df):
 @dispatch(int, int, int, int, int, int, int)
 def run_bayes(Nh1, nh1, Nh2, nh2, N, n, nmax):
     result = fasterpostN2(Nh1, nh1, Nh2, nh2, N, n, nmax)
-    print(result)
+    return result
 
 # passing a single dataframe. Needs to include columns: SNP N n Nh1 nh1 Nh2 nh2
 @dispatch(pd.DataFrame, int)
