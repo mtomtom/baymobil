@@ -187,5 +187,5 @@ df_results = baymob.run_bayes(dftest, 10)
 display(df_results)
 
 ## Run using the filenames
-baymob.run_bayes(["hom1_data.csv", "hom2_data.csv", "het_data.csv"])
+baymob.run_bayes("hom1_data.csv", "hom2_data.csv", "het_data.csv",10)
 ```
