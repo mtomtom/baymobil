@@ -16,7 +16,7 @@ The following Python packages are required to run baymobil:
 - pandarallel
 
 ## Installation
-baymobil is available from testpypi. To install: pip install -i https://test.pypi.org/simple/ baymobil
+baymobil is available from testpypi. To install: ``` pip install -i https://test.pypi.org/simple/ baymobil ```
 
 ## Usage
 
