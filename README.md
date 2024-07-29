@@ -57,8 +57,8 @@ Input data frames and CSV files should include the following columns:
 
 | SNP |  N  | n  | Nh1 | nh1 | Nh2 | nh2 |
 |-----|-----|----|-----|-----|-----|-----|
-| rs1 | 100 | 10 | 120 | 12  | 130 | 15  |
-| rs2 | 200 | 20 | 220 | 25  | 230 | 22  |
+| s1 | 100 | 10 | 120 | 12  | 130 | 15  |
+| s2 | 200 | 20 | 220 | 25  | 230 | 22  |
 
 ## Notes
 - Ensure all input values are numeric and non-negative.
