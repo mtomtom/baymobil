@@ -8,12 +8,15 @@ Baymobil takes in two sets of homograft data and one set of heterograft data. It
 
 ## Dependencies
 
-The following Python packages are required to run Baymobil:
+The following Python packages are required to run baymobil:
 - numpy
 - scipy
 - pandas
 - multipledispatch
 - pandarallel
+
+## Installation
+baymobil is available from testpypi. To install: pip install -i https://test.pypi.org/simple/ baymobil
 
 ## Usage
 
