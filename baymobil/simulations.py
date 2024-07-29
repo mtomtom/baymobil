@@ -105,12 +105,11 @@ def create_heterograft_data(N_values, q_values, N2_values, no_transcripts, const
 
     ## Calculate mobile reads based on stds
     df["variance"] = df["N"] * df["q"] * (1-df["q"])
-    df["std"] = np.sqrt(df["variance"])
+    df["std"] = np.sqrt(df["variance"]) ## q*N = Expected number of errors std of expected no.
     df["N2_func"] = 5 * np.ceil(df["std"])
-    df["N2"] = df["N2_func"] * df["mobile"] * df["q"] * df["N"]
+    df["N2"] = df["N2_func"] * df["mobile"] #* df["q"] * df["N"]
 
     ## Make sure that we have integer values, and that the mobile SNPs have at least 1 read added
-    print("Changes made")
     df["N2"] = np.ceil(df["N2"])
 
     df["n"] = df["n"] + df["N2"]
