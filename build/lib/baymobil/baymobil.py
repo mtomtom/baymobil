@@ -1,4 +1,5 @@
 ### Baymobil takes in 2 sets of homograft data, and 1 set of heterograft data, and compares the SNP specific error rates between the heterograft and homograft data sets. If these differ significantly, then the assumption is that the heterograft data contains both errors and reads from mobile transcripts, suggesting that they come from transcripts that have been transported across the graft junction (mobile)
+
 import numpy as np
 import scipy.special
 import numpy.ma as ma
@@ -148,30 +149,29 @@ def run_bayes(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
     df_hom1 = pd.read_csv(df_hom_eco1, low_memory=False, index_col = None)
     df_hom2 = pd.read_csv(df_hom_eco2, low_memory=False, index_col = None)
     df_het = pd.read_csv(het_file, low_memory=False, index_col = None)
-    df_het = check_data(df_het)
-    df_hom1 = check_data(df_hom1)
-    df_hom2 = check_data(df_hom2)
-    ## Rename the columns in the homograft files
-    df_hom1 = df_hom1.rename(columns={'N': 'Nhomo1', 'n': 'nhomo1'})
-    df_hom2 = df_hom2.rename(columns={'N': 'Nhomo2', 'n': 'nhomo2'})
-    ## Create a single dataframe with all of the values
-    het_merged = pd.merge(df_het, df_hom1[["SNP","Nhomo1","nhomo1"]], on = "SNP")
-    het_merged = pd.merge(het_merged, df_hom2[["SNP","Nhomo2","nhomo2"]], on = "SNP")
+    ## Merge the files before checking the data
+    het_merged = pd.merge(df_het, df_hom1.rename(columns={'N': 'Nh1', 'n': 'nh1'})[['SNP', 'Nh1', 'nh1']], on='SNP')
+
+    # Merge the result with df_hom2 and rename columns during the merge
+    het_merged = pd.merge(het_merged, df_hom2.rename(columns={'N': 'Nh2', 'n': 'nh2'})[['SNP', 'Nh2', 'nh2']], on='SNP')
+
+    df_final = check_data(het_merged)
+
     ## Add in our nmax values
     if nmax == "max":
-        het_merged["nmax"] = het_merged["N"]
+        df_final["nmax"] = df_final["N"]
     else:
         try:
-            het_merged["nmax"] = nmax
-            pd.to_numeric(het_merged["nmax"], errors='coerce')
+            df_final["nmax"] = nmax
+            pd.to_numeric(df_final["nmax"], errors='coerce')
         except:
             raise ValueError('Unable to convert nmax value to numeric.')
     ## Split the dataframe into chunks to parallelise
     pandarallel.initialize(progress_bar=False)
-    het_merged["pos"] = het_merged.parallel_apply(lambda x: fasterpostN2(x.Nhomo1, x.nhomo1, x.Nhomo2, x.nhomo2, x.N, x.n, 10), axis = 1)
-    het_merged[['meanN2','N2max','log10BF']] = pd.DataFrame(het_merged.pos.tolist(), index= het_merged.index)
-    het_merged.drop(columns=["pos"], inplace=True)
+    df_final["pos"] = df_final.parallel_apply(lambda x: fasterpostN2(x.Nh1, x.nh1, x.Nh2, x.nh2, x.N, x.n, 10), axis = 1)
+    df_final[['meanN2','N2max','log10BF']] = pd.DataFrame(df_final.pos.tolist(), index= df_final.index)
+    df_final.drop(columns=["pos"], inplace=True)
     ## Get the file name - remove path first
     file_name = os.path.basename(het_file)
     outfile = file_name.split(".")[0] + "_results.csv"
-    het_merged.to_csv(outfile, index = None)
+    df_final.to_csv(outfile, index = None)
