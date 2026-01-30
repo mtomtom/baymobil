@@ -2,6 +2,8 @@ from .baymobil import logbeta
 from .baymobil import fasterpostN2
 from .baymobil import run_bayes
 from .baymobil import check_data
+from .baymobil import run_bayes_vcf
+from .vcf_to_df import parse_vcf_ad
 from .simulations import create_simulated_data
 from .simulations import load_parameters
 from .simulations import create_homograft_data
