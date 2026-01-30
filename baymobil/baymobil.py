@@ -175,3 +175,40 @@ def run_bayes(df_hom_eco1:str, df_hom_eco2:str, het_file:str, nmax):
     file_name = os.path.basename(het_file)
     outfile = file_name.split(".")[0] + "_results.csv"
     df_final.to_csv(outfile, index = None)
+
+## Passing three vcf files
+@dispatch(str, str, str, int)
+def run_bayes_vcf(vcf_hom_eco1:str, vcf_hom_eco2:str, vcf_het:str, nmax):
+    ## Convert the vcfs to dataframes
+    from .vcf_to_df import parse_vcf_ad
+    df_hom1 = parse_vcf_ad(vcf_hom_eco1)
+    ## Make sure to set foreign = True for the second homograft
+    df_hom2 = parse_vcf_ad(vcf_hom_eco2, foreign=True)
+    df_het = parse_vcf_ad(vcf_het)
+    ## Merge the files before checking the data
+    het_merged = pd.merge(df_het, df_hom1.rename(columns={'N': 'Nh1', 'n': 'nh1'})[['SNP', 'Nh1', 'nh1']], on='SNP')
+
+    # Merge the result with df_hom2 and rename columns during the merge
+    het_merged = pd.merge(het_merged, df_hom2.rename(columns={'N': 'Nh2', 'n': 'nh2'})[['SNP', 'Nh2', 'nh2']], on='SNP')
+
+    df_final = check_data(het_merged)
+
+    ## Add in our nmax values
+    if nmax == "max":
+        df_final["nmax"] = df_final["N"]
+    else:
+        try:
+            df_final["nmax"] = nmax
+            pd.to_numeric(df_final["nmax"], errors='coerce')
+        except:
+            raise ValueError('Unable to convert nmax value to numeric.')
+    ## Split the dataframe into chunks to parallelise
+    pandarallel.initialize(progress_bar=False)
+    df_final["pos"] = df_final.parallel_apply(lambda x: fasterpostN2(x.Nh1, x.nh1, x.Nh2, x.nh2, x.N, x.n, 10), axis = 1)
+    df_final[['meanN2','N2max','log10BF']] = pd.DataFrame(df_final.pos.tolist(), index= df_final.index)
+    df_final.drop(columns=["pos"], inplace=True)
+    ## Get the file name - remove path first
+    file_name = os.path.basename(vcf_het)
+    outfile = file_name.split(".")[0] + "_results.csv"
+    df_final.to_csv(outfile, index = None)
+    return df_final
