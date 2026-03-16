@@ -1,12 +1,8 @@
 import gzip
 import pandas as pd
 
-
-
 def _open_maybe_gzip(path):
     return gzip.open(path, "rt") if path.endswith(".gz") else open(path)
-
-
 
 def _parse_ad(ad_val):
     """
@@ -33,7 +29,7 @@ def _parse_ad(ad_val):
     return None, None
 
 
-def parse_vcf_ad(vcf_path, foreign=False):
+def parse_vcf_ad(vcf_path, foreign=False, snp_only=True):
     """
     Parse a single-sample VCF and return a DataFrame with:
       SNP, N, n, n_ref, n_alt, GeneID, Effect
@@ -46,6 +42,9 @@ def parse_vcf_ad(vcf_path, foreign=False):
     foreign:
       False → n = n_alt
       True  → n = n_ref
+    snp_only:
+      True → keep only single-base REF/ALT (exclude indels and multi-allelics)
+             but allow ALT="." for reference-only calls at those sites
     """
     records = []
 
@@ -59,8 +58,17 @@ def parse_vcf_ad(vcf_path, foreign=False):
                 continue
 
             chrom, pos = fields[0], fields[1]
+            ref, alt = fields[3], fields[4]
             fmt = fields[8]
             sample = fields[9]
+
+            if snp_only:
+                if len(ref) != 1:
+                    continue
+                if alt != "." and len(alt) != 1:
+                    continue
+                if "," in alt:
+                    continue
 
             snp = f"{chrom}_{pos}"
 
@@ -91,3 +99,31 @@ def parse_vcf_ad(vcf_path, foreign=False):
             })
 
     return pd.DataFrame(records)
+
+
+def extract_all_snp_gene_table(vcf_path):
+    rows = []
+    opener = gzip.open if vcf_path.endswith(".gz") else open
+    with opener(vcf_path, "rt") as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            fields = line.rstrip("\n").split("\t")
+            chrom, pos, _, ref, alt, qual, flt, info = fields[:8]
+
+            gene = None
+            for entry in info.split(";"):
+                if entry.startswith("GENE="):
+                    gene = entry.split("=", 1)[1]
+                    break
+
+            snp_id = f"{chrom}_{pos}"
+            rows.append({
+                "SNP": snp_id,
+                "CHROM": chrom,
+                "POS": int(pos),
+                "REF": ref,
+                "ALT": alt,
+                "GENE": gene,
+            })
+    return pd.DataFrame(rows)
